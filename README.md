@@ -1,7 +1,11 @@
-# desktop-pet v1.0.0
+# desktop-pet v1.1.0
 A "pet" that is displayed on your desktop. This project serves no practical use whatsoever. Jk it's for ADHD.
 
-![pet_miku](https://github.com/user-attachments/assets/5a1093b2-06c8-4ad4-9152-fe564df93ecc)
+## Current Features:
+- Draggable
+- Plays an idle, and two walking animations
+
+![pet_miku_movement](https://github.com/user-attachments/assets/41830fc7-8c34-42ba-bfa6-f2bc7adec193)
 
 
 ## Getting Started
@@ -35,5 +39,5 @@ python pet.py
 
 You can modify the script to customize your experience:
 
-- Adjust GIF Speed: Change the `MS` variable in the code to set the speed of the GIF. This is the delay between frame updates in milliseconds.
-- Change GIF File: Update the path in the code from `resources/your_gif.gif` to the path of the GIF you want to display. Make sure your GIF is in the correct format and accessible from the specified path.
+- Change GIF Files: Stored in the `GIFS` array. Currently, the animation supports `idle.gif`, `walk_f.gif`, and `walk_b.gif`. Unfortunately, the walking GIFs are **CASE SENSITIVE**. Might make them not case sensitive in the future. If you just want one GIF to play, then you can simply remove the last two GIF paths in the `GIFS` array and add in your desired GIF.
+- Adjust GIF Speed: Change the `self.ms` variable in the code to set the speed of the GIF. This is the delay between frame updates in milliseconds. Currently, there are arbitrary speeds that cater towards making the animations smooth. This variable might vary.
