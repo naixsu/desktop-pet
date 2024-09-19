@@ -1,9 +1,9 @@
-# desktop-pet v1.1.0
+# desktop-pet v1.2.0
 A "pet" that is displayed on your desktop. This project serves no practical use whatsoever. Jk it's for ADHD.
 
 ## Current Features:
 - Draggable
-- Plays an idle, and two walking animations
+- Plays an idle, and two walking animations. Pressing `SPACE_BAR` changes the animation.
 
 ![pet_miku_movement](https://github.com/user-attachments/assets/41830fc7-8c34-42ba-bfa6-f2bc7adec193)
 
@@ -31,9 +31,13 @@ pip install -r requirements.txt
 
 In the cloned directory, execute the script to start the application:
 
-```bash
-python pet.py
-```
+
+| OS         | Command                                       |
+| ------     | ----------------------------------------------|
+| All        |<br><pre lang="bash">python pet.py</pre></br>  |
+| Windows    |<pre lang="bash">bin/angkal</pre>              |
+
+
 
 ## Customizing the Application
 
