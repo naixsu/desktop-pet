@@ -1,133 +1,131 @@
-import tkinter as tk
-from PIL import Image, ImageTk, ImageSequence
+import sys
+from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
+from PyQt5.QtGui import QMovie
+from PyQt5.QtCore import Qt, QTimer
 
-# Define custom vars here
-# MS = 50  # Delay for GIF frames in milliseconds
 GIFS = [
     "resources/idle.gif",
     "resources/walk_f.gif",
     "resources/walk_b.gif",
 ]
 
-class Pet:
-    def __init__(self, window: tk):
+class Pet(QMainWindow):
+    def __init__(self):
+        super().__init__()
         self.current_gif = 0
-        self.frames = {}  # Dictionary to store frames for each GIF
-        self.gif = None
-        self.gif_path = None
-        self.x_start = None
-        self.y_start = None
         self.gif_label = None
         self.ms = 50
-        
-        self.window = window
-        self.load_all_gifs()  # Load all GIFs and their frames during initialization
-        
-        # Movement control
         self.move_direction = None
-        self.move_speed = 5  # Speed of movement in pixels
-    
+        self.move_speed = 5
+        self.gif_speed = 25  # Default speed is 100% (normal speed)
+
+        self.init_ui()
+        self.change_speed(self.gif_speed)
+
+    def init_ui(self):
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+
+        self.gif_label = QLabel(self)
+        
+        self.load_all_gifs()
+        
+        self.gif_timer = QTimer(self)
+        self.gif_timer.timeout.connect(self.update_gif)
+        self.gif_timer.start(self.ms)
+        
+        self.show()
+
     def load_all_gifs(self):
+        self.gifs = []
         for gif_path in GIFS:
-            gif = Image.open(gif_path)
-            frames = [ImageTk.PhotoImage(img) for img in ImageSequence.Iterator(gif)]
-            self.frames[gif_path] = frames
-            print(f"Loaded {len(frames)} frames for {gif_path}")
+            movie = QMovie(gif_path)
+            movie.setCacheMode(QMovie.CacheAll)
+            movie.setSpeed(self.gif_speed)  # Set initial speed
+            self.gifs.append(movie)
+            print(f"Loaded GIF: {gif_path}")
 
-    def start(self):
-        # Load the initial GIF
-        self.gif_path = GIFS[self.current_gif]
-        self.gif = self.frames[self.gif_path]
-        
-        # Display the first frame with transparent background
-        self.gif_label = tk.Label(self.window, bg="black")  # Set label background to black to match transparency
-        self.gif_label.pack()
-        
-        # Bind mouse events for dragging
-        self.gif_label.bind("<Button-1>", self.on_drag_start)  # Start dragging when mouse button is pressed
-        self.gif_label.bind("<B1-Motion>", self.on_drag_motion)  # Drag window with mouse motion
-        
-        # Start the GIF loop
-        self.window.after(0, self.update_gif, 0)
-        # Run the window loop
-        self.window.mainloop()
+        self.gif = self.gifs[self.current_gif]
+        self.gif_label.setMovie(self.gif)
+        self.gif.start()
 
-    def update_gif(self, ind):
-        frame = self.gif[ind]
-        self.gif_label.configure(image=frame)
-        print('update_gif', frame, self.gif_path, ind)
-        ind += 1
-        if ind == len(self.gif):
-            ind = 0
-            # Schedule switch only after the last frame is displayed
-            self.window.after(self.ms, self.switch_gif)  # Use self.ms delay to ensure the last frame is shown
-            return
+        # Update window size to match GIF size
+        gif_size = self.gif.currentPixmap().size()
+        self.resize(gif_size.width(), gif_size.height())
+        self.gif_label.setGeometry(0, 0, gif_size.width(), gif_size.height())
+
+        # Handle GIF direction for movement
+        if "walk_f" in GIFS[self.current_gif]:
+            self.move_direction = 'left'
+        elif "walk_b" in GIFS[self.current_gif]:
+            self.move_direction = 'right'
+        else:
+            self.move_direction = None
+
+    def update_gif(self):
+        self.gif_label.setMovie(self.gif)
+        self.gif.start()
         
-        # Move window based on current GIF
         if self.move_direction:
             self.move_window()
-        
-        # self.ms = self.ms, basically adjust the speed of the gif
-        self.window.after(self.ms, self.update_gif, ind)
 
     def move_window(self):
-        x, y = self.window.winfo_x(), self.window.winfo_y()
+        x, y = self.x(), self.y()
         if self.move_direction == 'left':
             x -= self.move_speed
         elif self.move_direction == 'right':
             x += self.move_speed
         
-        # Update window position
-        self.window.geometry(f"+{x}+{y}")
-    
-    def switch_gif(self):
-        # Clear the label's image to avoid flickering
-        self.gif_label.configure(image='')
+        self.move(x, y)
 
-        # Switch GIF
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Space:
+            self.switch_gif()
+
+        # NOTE: Maybe do something with this in the future
+        # elif event.key() == Qt.Key_Up:
+        #     self.change_speed(10)  # Increase speed
+        # elif event.key() == Qt.Key_Down:
+        #     self.change_speed(-10)  # Decrease speed
+
+        super().keyPressEvent(event)
+
+    def switch_gif(self):
         self.current_gif = (self.current_gif + 1) % len(GIFS)
-        self.gif_path = GIFS[self.current_gif]
-        self.gif = self.frames[self.gif_path]
-        
-        # Update movement direction based on GIF
-        if "walk_f" in self.gif_path:
+        self.gif = self.gifs[self.current_gif]
+        self.gif_label.setMovie(self.gif)
+        self.gif.start()
+
+        # Update window size to match new GIF size
+        gif_size = self.gif.currentPixmap().size()
+        self.resize(gif_size.width(), gif_size.height())
+        self.gif_label.setGeometry(0, 0, gif_size.width(), gif_size.height())
+
+        if "walk_f" in GIFS[self.current_gif]:
             self.move_direction = 'left'
-        elif "walk_b" in self.gif_path:
+        elif "walk_b" in GIFS[self.current_gif]:
             self.move_direction = 'right'
         else:
             self.move_direction = None
-        
-        # This is just to smooth out the animation frames
-        # NOTE: The `ms` numbers are all arbitrary
-        if self.move_direction is None: # Idling
-            self.ms = 50
-        else:
-            self.ms = 70
-        
-        print(f"Switching to GIF {self.current_gif} with {len(self.gif)} frames")
 
-        # Restart the GIF animation
-        self.update_gif(0)
-    
-    def on_drag_start(self, event):
-        self.x_start = event.x
-        self.y_start = event.y
+        print(f"Switching to GIF {self.current_gif}")
 
-    def on_drag_motion(self, event):
-        x = self.window.winfo_pointerx() - self.x_start
-        y = self.window.winfo_pointery() - self.y_start
-        self.window.geometry(f"+{x}+{y}")
+    def change_speed(self, delta):
+        self.gif_speed = max(10, self.gif_speed + delta)  # Ensure speed is not less than 10%
+        self.gif.setSpeed(self.gif_speed)
+        print(f"Changed GIF speed to {self.gif_speed}")
 
-if __name__ == "__main__":
-    # Create a window
-    window = tk.Tk()
-    window.title("GIF Display")
+    def mousePressEvent(self, event):
+        self.drag_start_x = event.x()
+        self.drag_start_y = event.y()
 
-    window.overrideredirect(True)  # Removes window decorations (title bar, borders)
-    window.attributes("-topmost", True)  # Keep window always on top
+    def mouseMoveEvent(self, event):
+        dx = event.x() - self.drag_start_x
+        dy = event.y() - self.drag_start_y
+        self.move(self.x() + dx, self.y() + dy)
 
-    # NOTE: This is a bit iffy. Maybe some gifs have a white bg, so change this to the respective color.
-    window.attributes("-transparentcolor", "black")  # Make the black color transparent.
 
-    pet = Pet(window)
-    pet.start()
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    pet = Pet()
+    sys.exit(app.exec_())
