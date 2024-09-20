@@ -1,13 +1,19 @@
 import sys
+import random
 from PyQt5.QtWidgets import QApplication, QLabel, QMainWindow
 from PyQt5.QtGui import QMovie
 from PyQt5.QtCore import Qt, QTimer
 
-GIFS = [
-    "resources/normal_idle.gif",
-    "resources/normal_walk_f.gif",
-    "resources/normal_walk_b.gif",
-]
+moods = ["cool", "happy", "normal", "special"]
+actions = {
+    "cool": ["angry", "doubt", "idle", "joy", "laugh", "listen", "sad", "surprise", "talk"],  # no "walk_f" and "walk_b"
+    "happy": ["angry", "doubt", "idle", "joy", "laugh", "listen", "sad", "surprise", "talk"],  # no "walk_f" and "walk_b"
+    "normal": ["angry", "doubt", "idle", "joy", "laugh", "listen", "surprise", "talk", "walk_f", "walk_b"],  # no "sad"
+    "special": ["negi"],
+}
+
+# Create a dictionary that maps each mood to its respective available actions
+GIFS = {mood: {action: f"resources/{mood}_{action}.gif" for action in actions[mood]} for mood in moods}
 
 class Pet(QMainWindow):
     def __init__(self):
@@ -18,17 +24,17 @@ class Pet(QMainWindow):
         self.move_direction = None
         self.move_speed = 5
         self.gif_speed = 30
+        self.mood = random.choice(moods)  # Randomly initialize mood
 
         self.init_ui()
         self.change_speed(self.gif_speed)
 
     def init_ui(self):
-        # self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground, True)
 
         self.gif_label = QLabel(self)
         
-        self.load_all_gifs()
+        self.load_gifs_by_mood()  # Load GIFs based on current mood
         
         self.gif_timer = QTimer(self)
         self.gif_timer.timeout.connect(self.update_gif)
@@ -36,31 +42,17 @@ class Pet(QMainWindow):
         
         self.show()
 
-    def load_all_gifs(self):
+    def load_gifs_by_mood(self):
         self.gifs = []
-        for gif_path in GIFS:
+        mood_gifs = GIFS[self.mood]  # Only load GIFs for the current mood
+        for action, gif_path in mood_gifs.items():
             movie = QMovie(gif_path)
             movie.setCacheMode(QMovie.CacheAll)
             movie.setSpeed(self.gif_speed)  # Set initial speed
-            self.gifs.append(movie)
-            print(f"Loaded GIF: {gif_path}")
+            self.gifs.append((action, movie))
+            print(f"Loaded GIF for {self.mood}: {gif_path}")
 
-        self.gif = self.gifs[self.current_gif]
-        self.gif_label.setMovie(self.gif)
-        self.gif.start()
-
-        # Update window size to match GIF size
-        gif_size = self.gif.currentPixmap().size()
-        self.resize(gif_size.width(), gif_size.height())
-        self.gif_label.setGeometry(0, 0, gif_size.width(), gif_size.height())
-
-        # Handle GIF direction for movement
-        if "walk_f" in GIFS[self.current_gif]:
-            self.move_direction = 'left'
-        elif "walk_b" in GIFS[self.current_gif]:
-            self.move_direction = 'right'
-        else:
-            self.move_direction = None
+        self.switch_gif()
 
     def update_gif(self):
         self.gif_label.setMovie(self.gif)
@@ -82,17 +74,16 @@ class Pet(QMainWindow):
         if event.key() == Qt.Key_Space:
             self.switch_gif()
 
-        # NOTE: Maybe do something with this in the future
         elif event.key() == Qt.Key_Up:
-            self.change_speed(10)  # Increase speed
+            self.change_speed(5)  # Increase speed
         elif event.key() == Qt.Key_Down:
-            self.change_speed(-10)  # Decrease speed
+            self.change_speed(-5)  # Decrease speed
 
         super().keyPressEvent(event)
 
     def switch_gif(self):
-        self.current_gif = (self.current_gif + 1) % len(GIFS)
-        self.gif = self.gifs[self.current_gif]
+        self.current_gif = (self.current_gif + 1) % len(self.gifs)
+        action, self.gif = self.gifs[self.current_gif]
         self.gif_label.setMovie(self.gif)
         self.gif.start()
 
@@ -101,17 +92,17 @@ class Pet(QMainWindow):
         self.resize(gif_size.width(), gif_size.height())
         self.gif_label.setGeometry(0, 0, gif_size.width(), gif_size.height())
 
-        if "walk_f" in GIFS[self.current_gif]:
+        # Handle GIF direction for movement
+        if "walk_f" in action:
             self.move_direction = 'left'
-        elif "walk_b" in GIFS[self.current_gif]:
+        elif "walk_b" in action:
             self.move_direction = 'right'
         else:
             self.move_direction = None
 
-        print(f"Switching to GIF {self.current_gif}")
+        print(f"Switched to {self.mood}:{action}")
 
     def change_speed(self, delta):
-        print(self.gif_speed, delta)
         self.gif_speed += delta
         self.gif_speed = max(10, self.gif_speed)  # Ensure speed is not less than 10%
         self.gif.setSpeed(self.gif_speed)
