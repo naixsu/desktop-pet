@@ -89,6 +89,14 @@ class Pet(QMainWindow):
             self.change_speed(-10)  # Decrease speed
 
         super().keyPressEvent(event)
+    
+    def enterEvent(self, event):
+        print("Mouse entered the window")
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        print("Mouse left the window")
+        super().leaveEvent(event)
 
     def switch_gif(self):
         self.current_gif = (self.current_gif + 1) % len(GIFS)
