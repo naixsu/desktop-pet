@@ -1,0 +1,5 @@
+#!/home/cf/desktop-pet/venv/bin/python
+import subprocess
+
+pet_script_path = '/home/cf/desktop-pet/desktop-pet/pet.py'
+subprocess.run(['/home/cf/desktop-pet/venv/bin/python', pet_script_path])
