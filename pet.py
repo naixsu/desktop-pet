@@ -70,7 +70,26 @@ class Pet(QMainWindow):
             self.move_window()
 
     def move_window(self):
+        # # Old walk code.
+        # x, y = self.x(), self.y()
+        # if self.move_direction == 'left':
+        #     x -= self.move_speed
+        # elif self.move_direction == 'right':
+        #     x += self.move_speed
+        
+        # self.move(x, y)
+
+        # TODO: find a way to auto walk on all screens
+        screen_rect = QApplication.primaryScreen().availableGeometry()
         x, y = self.x(), self.y()
+        
+        # Check for edges
+        if x <= screen_rect.left():
+            self.switch_gif()
+        elif x + self.width() >= screen_rect.right():
+            self.current_gif += 1 # Skip idle
+            self.switch_gif()
+
         if self.move_direction == 'left':
             x -= self.move_speed
         elif self.move_direction == 'right':
@@ -82,11 +101,11 @@ class Pet(QMainWindow):
         if event.key() == Qt.Key_Space:
             self.switch_gif()
 
-        # NOTE: Maybe do something with this in the future
+        # # NOTE: Maybe do something with this in the future
         # elif event.key() == Qt.Key_Up:
-        #     self.change_speed(10)  # Increase speed
+        #     self.change_speed(5)  # Increase speed
         # elif event.key() == Qt.Key_Down:
-        #     self.change_speed(-10)  # Decrease speed
+        #     self.change_speed(-5)  # Decrease speed
 
         super().keyPressEvent(event)
 
@@ -108,7 +127,7 @@ class Pet(QMainWindow):
         else:
             self.move_direction = None
 
-        print(f"Switching to GIF {self.current_gif}")
+        # print(f"Switching to GIF {self.current_gif}")
 
     def change_speed(self, delta):
         self.gif_speed = max(10, self.gif_speed + delta)  # Ensure speed is not less than 10%
